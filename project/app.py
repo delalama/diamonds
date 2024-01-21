@@ -1,73 +1,73 @@
-from flask import Flask, render_template
-import numpy as np
-import matplotlib.pyplot as plt
+from flask import Flask, render_template, request, send_file, jsonify
 from io import BytesIO
+import matplotlib
+matplotlib.use('Agg')  # Use the Agg backend
+import matplotlib.pyplot as plt
 import base64
-
 from utils.diamond_helper import getDiamonds
 
 app = Flask(__name__)
 
+# Sample data (you can replace it with your data)
+diamonds = getDiamonds(None)
 
+# Create a dictionary for quick access to Diamond objects by ID
+diamonds_dict = {diamond.id: diamond for diamond in diamonds}
 
-# Sample data
-diamonds = getDiamonds(4)
+# Initialize diamonds_to_compare as an empty list
+diamonds_to_compare = []
 
+@app.route('/')
+def show_main_page():
+    diamonds_id_list = list(diamonds_dict.keys())
+    return render_template('index.html', diamonds_id_list=diamonds_id_list, diamonds_to_compare=diamonds_to_compare)
 
-@app.route('/diamond/<int:diamond_id>')
-def show_diamond(diamond_id):
-    # Find the selected diamond
-    selected_diamond = next((diamond for diamond in diamonds if diamond.id == diamond_id), None)
+@app.route('/compare', methods=['GET', 'POST'])
+def compare_diamonds():
+    global diamonds_to_compare
 
-    if selected_diamond:
-        # Get the index of the selected diamond
-        index = diamonds.index(selected_diamond)
+    # Get the selected diamond IDs from the form submission
+    diamond_id1 = int(request.form.get('diamondId1'))
+    diamond_id2 = int(request.form.get('diamondId2'))
 
-        # Calculate indices for next and previous diamonds
-        prev_index = index - 1 if index > 0 else None
-        next_index = index + 1 if index < len(diamonds) - 1 else None
+    # Retrieve diamond information for comparison
+    diamonds_to_compare = [diamonds_dict.get(diamond_id1), diamonds_dict.get(diamond_id2)]
 
-        # Get diamonds for next and previous indices
-        prev_diamond = diamonds[prev_index] if prev_index is not None else None
-        next_diamond = diamonds[next_index] if next_index is not None else None
+    # Pass the retrieved data and diamonds_id_list to the front end
+    diamonds_id_list = list(diamonds_dict.keys())
+    return render_template('index.html', diamonds_id_list=diamonds_id_list, diamonds_to_compare=diamonds_to_compare)
 
-        # Create a scatter plot for the selected diamond
-        plt.figure(figsize=(8, 5))
-        plt.scatter(selected_diamond.carat, selected_diamond.price, marker='o', color='red')
-        plt.title(f'Diamond Information - ID: {selected_diamond.id}')
-        plt.xlabel('Carat')
-        plt.ylabel('Price ($)')
+@app.route('/get_chart/<int:diamond_id>')
+def get_chart(diamond_id):
+    diamond = diamonds_dict.get(diamond_id)
 
-        # Annotate the point with attribute values
-        plt.annotate(
-            f'Carat: {selected_diamond.carat}\nCut: {selected_diamond.cut}\nColor: {selected_diamond.color}\n'
-            f'Clarity: {selected_diamond.clarity}\nDepth: {selected_diamond.depth}\n'
-            f'Table: {selected_diamond.table}\nPrice: {selected_diamond.price}\n'
-            f'X: {selected_diamond.x}\nY: {selected_diamond.y}\nZ: {selected_diamond.z}',
-            (selected_diamond.carat, selected_diamond.price),
-            textcoords="offset points",
-            xytext=(0, 10),
-            ha='center',
-            fontsize=8,
-            color='black'
-        )
-
-        # Save the plot to a BytesIO object
-        image_stream = BytesIO()
-        plt.savefig(image_stream, format='png')
-        image_stream.seek(0)
-
-        # Encode the image to base64 for embedding in HTML
-        encoded_image = base64.b64encode(image_stream.read()).decode('utf-8')
-
-        plt.close()  # Close the plot to free resources
-
-        return render_template('diamond.html', image=encoded_image,
-                               diamond=selected_diamond,
-                               prev_diamond_id=prev_diamond.id if prev_diamond else None,
-                               next_diamond_id=next_diamond.id if next_diamond else None)
-    else:
+    if not diamond:
         return 'Diamond not found', 404
+
+    try:
+        # Create a bar chart with all attributes
+        attributes = ['carat', 'depth', 'table', 'price', 'x', 'y', 'z']
+        values = [getattr(diamond, attr) for attr in attributes]
+
+        # Use Agg backend to avoid GUI-related warnings
+        plt.switch_backend('Agg')
+
+        plt.bar(attributes, values)
+        plt.title(f'Diamond Attributes - ID {diamond_id}')
+        plt.xlabel('Attributes')
+        plt.ylabel('Values')
+
+        # Save the chart to a BytesIO object
+        img_io = BytesIO()
+        plt.savefig(img_io, format='png')
+        img_io.seek(0)
+
+        # Encode the image as base64 and return it
+        img_base64 = base64.b64encode(img_io.getvalue()).decode('utf-8')
+
+        return f'data:image/png;base64,{img_base64}'
+    except Exception as e:
+        return jsonify(error=str(e)), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
