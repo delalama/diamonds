@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diamond Information</title>
+</head>
+<body>
+    <h1>Diamond Information</h1>
+    <!-- Display the scatter plot for the selected diamond -->
+    <img src="data:image/png;base64,{{ image }}" alt="Diamond Scatter Plot">
+    
+    <!-- Display attribute values of the selected diamond -->
+    <div>
+        <h2>Attributes:</h2>
+        <p>ID: {{ diamond.id }}</p>
+        <p>Carat: {{ diamond.carat }}</p>
+        <p>Cut: {{ diamond.cut }}</p>
+        <p>Color: {{ diamond.color }}</p>
+        <p>Clarity: {{ diamond.clarity }}</p>
+        <p>Depth: {{ diamond.depth }}</p>
+        <p>Table: {{ diamond.table }}</p>
+        <p>Price: {{ diamond.price }}</p>
+        <p>X: {{ diamond.x }}</p>
+        <p>Y: {{ diamond.y }}</p>
+        <p>Z: {{ diamond.z }}</p>
+    </div>
+</body>
+</html>
