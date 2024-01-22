@@ -1,15 +1,14 @@
-from flask import Flask, render_template, request, send_file, jsonify
+import flask
 from io import BytesIO
 import matplotlib
 matplotlib.use('Agg')  # Use the Agg backend
 import matplotlib.pyplot as plt
 import base64
-from utils.diamond_helper import getDiamonds
+from utils.diamond_helper import get_diamonds
 
 app = Flask(__name__)
 
-# Sample data (you can replace it with your data)
-diamonds = getDiamonds(None)
+diamonds = get_diamonds(None)
 
 # Create a dictionary for quick access to Diamond objects by ID
 diamonds_dict = {diamond.id: diamond for diamond in diamonds}
