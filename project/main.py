@@ -1,8 +1,8 @@
-from project.utils.csv import get_csv
-from project.utils.eda_helper import (preliminary_analysis, summary, univariate_analysis, bivariate_analysis
+from utils.csv import get_csv
+from utils.eda_helper import (preliminary_analysis, summary, univariate_analysis, bivariate_analysis
 , multivariable_analysis, identify_outliers)
 
-df = get_csv()
+df = get_csv(None)
 
 # Preliminary analisis
 preliminary_analysis(df)
